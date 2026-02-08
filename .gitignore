@@ -1,0 +1,5 @@
+# Binary and object files
+*.o
+
+# build directories
+build/
