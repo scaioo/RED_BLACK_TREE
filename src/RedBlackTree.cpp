@@ -1,19 +1,15 @@
-#ifndef RedBlackTree_h
-#define RedBlackTree_h
-class RedBlackTree {
-    private:
-        // Define the color type
-        enum Color {RED, BLACK};
+#include "RedBlackTree.h"
 
-        // Define the structure of a node in the red-black tree
-        struct Node {
-            int data;
-            Color color;
-            Node *right, *left, *parent;
+void RedBlackTree::Left_Rotate(Node*& A) {};
 
-            Node (int val) : data(val), color(RED) , left(nullptr), right(nullptr), parent(nullptr) {};    
-        };
+void RedBlackTree::Right_Rotate(Node*& A) {};
 
-};
+void RedBlackTree::insert_fixup(Node*& A) {};
 
-#endif
+void RedBlackTree::remove_fixup(Node*& A) {};
+
+void RedBlackTree::insert(int key) {};
+
+void RedBlackTree::remove(int key) {};
+
+bool RedBlackTree::search(int key) {};
