@@ -19,18 +19,28 @@ class RedBlackTree {
         Node *root;
         Node *NIL;
 
+        // Support Functions
+        void Transplant(Node* &x, Node* &y);
+        Node* Tree_minimum(Node* x);
+
         // Rotation
-        void Left_Rotate(Node*& A);
-        void Right_Rotate(Node*& A);
+        void Left_Rotate(Node* &x);
+        void Right_Rotate(Node* &x);
 
         // Fixup
-        void insert_fixup(Node*& A);
-        void remove_fixup(Node*& A);
+        void insert_fixup(Node* &x);
+        void remove_fixup(Node* &x);
     
     public:
 
         // Constructor
-        RedBlackTree() : root(nullptr) {};
+        RedBlackTree() {
+            // create a single sentinel node and mark it BLACK
+            NIL = new Node(0);
+            NIL->color = BLACK;
+            NIL->left = NIL->right = NIL->parent = nullptr;
+            root = NIL;
+        };
 
         // Define primitive function: insert search delete
         void insert(int key);

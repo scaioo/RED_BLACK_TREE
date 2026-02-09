@@ -4,5 +4,5 @@
 
 int main() {
     printf("Hello Red-Black Tree! \n");
-    return 0;
+  return 0;
 }
