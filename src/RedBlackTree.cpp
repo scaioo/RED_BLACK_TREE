@@ -1,4 +1,4 @@
-#include "RedBlackTree.h"
+#include "RedBlackTree.hpp"
 
 void RedBlackTree::Left_Rotate(Node*& A) {};
 
@@ -12,4 +12,4 @@ void RedBlackTree::insert(int key) {};
 
 void RedBlackTree::remove(int key) {};
 
-bool RedBlackTree::search(int key) {};
+bool RedBlackTree::search(int key) {return 0;};

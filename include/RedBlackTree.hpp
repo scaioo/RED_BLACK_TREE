@@ -15,8 +15,9 @@ class RedBlackTree {
             Node (int val) : data(val), color(RED) , left(nullptr), right(nullptr), parent(nullptr) {};    
         };
         
-        // Root
+        // Root and Sentinel 
         Node *root;
+        Node *NIL;
 
         // Rotation
         void Left_Rotate(Node*& A);

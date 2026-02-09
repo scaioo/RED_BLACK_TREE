@@ -1,7 +1,8 @@
 #include <iostream>
+#include <cstdio>
 #include "RedBlackTree.hpp"
 
 int main() {
-    std::cout << "Hello Red-Black Tree!" << std::endl;
+    printf("Hello Red-Black Tree! \n");
     return 0;
 }
