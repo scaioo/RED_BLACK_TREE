@@ -47,6 +47,10 @@ class RedBlackTree {
         void remove(int key);
         bool search(int key);
 
+        // Verify properties
+        void verifyProperties();
+        int checkNodes(Node* n);
+
 
 };  
 
