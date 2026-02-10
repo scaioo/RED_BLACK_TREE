@@ -1,5 +1,6 @@
 #ifndef RedBlackTree_h
 #define RedBlackTree_h
+#include <string>
 
 class RedBlackTree {
     private:
@@ -12,10 +13,12 @@ class RedBlackTree {
             Color color;
             Node *right, *left, *parent;
 
-            Node (int val) : data(val), color(RED) , left(nullptr), right(nullptr), parent(nullptr) {};    
+            Node (int val) : data(val), color(RED) , left(nullptr), right(nullptr), parent(nullptr) {}    
+
+            ~Node() {}
         };
         
-        // Root and Sentinel 
+        // Root and Sentinel
         Node *root;
         Node *NIL;
 
@@ -24,34 +27,43 @@ class RedBlackTree {
         Node* Tree_minimum(Node* x);
 
         // Rotation
-        void Left_Rotate(Node* &x);
-        void Right_Rotate(Node* &x);
+        void Left_Rotate(Node* x);
+        void Right_Rotate(Node* x);
 
         // Fixup
         void insert_fixup(Node* &x);
         void remove_fixup(Node* &x);
-    
+        
+        // Helper for printing
+        void printHelper(Node* x, std::string indent, bool last);
+        
     public:
 
         // Constructor
         RedBlackTree() {
             // create a single sentinel node and mark it BLACK
-            NIL = new Node(0);
+            NIL = new Node(-1);
             NIL->color = BLACK;
-            NIL->left = NIL->right = NIL->parent = nullptr;
             root = NIL;
+
         };
+
+        // Destructor
+
 
         // Define primitive function: insert search delete
         void insert(int key);
         void remove(int key);
         bool search(int key);
+        Node* getroot() {return root;};
 
         // Verify properties
         void verifyProperties();
         int checkNodes(Node* n);
+        void printTree(Node* root, int space);
 
-
+        // Printing
+        void prettyPrint();
 };  
 
 #endif 

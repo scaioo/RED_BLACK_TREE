@@ -1,6 +1,13 @@
 #include "RedBlackTree.hpp"
 #include <cassert>
 #include <algorithm>
+#include <iostream>
+#include <string>
+
+
+#define RESET   "\033[0m"
+#define RED_TXT "\033[31m"      // Red
+#define BLK_TXT "\033[90m"      // Black
 
 void RedBlackTree::Transplant(Node* &u, Node* &v){
     
@@ -21,7 +28,7 @@ RedBlackTree::Node* RedBlackTree::Tree_minimum(Node* x){
     return x;
 };
 
-void RedBlackTree::Left_Rotate(Node* &x) {
+void RedBlackTree::Left_Rotate(Node* x) {
     
     Node* y = x->right;
     x->right = y->left;
@@ -40,7 +47,7 @@ void RedBlackTree::Left_Rotate(Node* &x) {
     x->parent = y;
 };
 
-void RedBlackTree::Right_Rotate(Node* &x) {
+void RedBlackTree::Right_Rotate(Node* x) {
     
     Node* y = x->left;
     x->left = y->right;
@@ -60,9 +67,7 @@ void RedBlackTree::Right_Rotate(Node* &x) {
 };
 
 void RedBlackTree::insert_fixup(Node* &z) {
-    
     Node* y = NIL;
-
     while(z->parent->color == RED){
         if(z->parent == z->parent->parent->left){   // is z's parent a left child ? 
             y = z->parent->parent->right;           // y is z'uncle
@@ -97,7 +102,7 @@ void RedBlackTree::insert_fixup(Node* &z) {
                 Left_Rotate(z->parent->parent);     //  |
             }            
         }
-    }
+    } 
     root->color = BLACK;
 };
 
@@ -173,7 +178,7 @@ void RedBlackTree::insert(int key) {
     z->parent = y;
     
     if(y == NIL) 
-        root = NIL;
+        root = z;
     else if (z->data < y->data)
         y->left = z;
     else y->right = z;
@@ -181,19 +186,22 @@ void RedBlackTree::insert(int key) {
     z->left = NIL;
     z->right = NIL;
     z-> color = RED;
-    
     insert_fixup(z);
+    
 };
 
 void RedBlackTree::remove(int key) {
     Node* z = root;
+
     // find the node with the key value
     while (z != NIL and key != z->data){
-        if(key < z->data)
+        if(key < z->data){
             z = z->left;
-        else z = z->right;
+        }else{
+            z = z->right;
+        }
     }
-    assert(z != NIL and "Errore: Tentativo di rimuovere una chiave inesistente!"); 
+    //assert(z != NIL and "Errore: Tentativo di rimuovere una chiave inesistente!"); 
 
     Node* y = z;
     Node* x = NIL;
@@ -241,7 +249,7 @@ bool RedBlackTree::search(int key) {
         else z = z->right;
 
     }
-    
+
     if (z == NIL) return 0;
     else return 1;
 
@@ -251,29 +259,76 @@ bool RedBlackTree::search(int key) {
 void RedBlackTree::verifyProperties() {
     if (root == NIL) return;
 
-    // 1. La radice deve essere NERA
+    // 1. Root must be black
     assert(root->color == BLACK);
 
-    // 2. Controllo ricorsivo per Rossi consecutivi e Altezza Nera
+    // 2. Recursive check for consecutive Reds and black height
     checkNodes(root);
 };
 
 int RedBlackTree::checkNodes(Node* n) {
-    if (n == NIL) return 1; // Le foglie NIL sono nere, contano come 1
-
-    // Regola: Un nodo ROSSO non può avere figli ROSSI
+    if (n == NIL) return 1; // Leafs are BLACK
+    
+    // Rule: a RED node can't have RED child
     if (n->color == RED) {
         assert(n->left->color == BLACK);
         assert(n->right->color == BLACK);
     }
 
-    // Regola: Ogni percorso dalla radice alle foglie deve avere lo stesso numero di nodi neri
+    // Rule: Every path from root to leaf must hav ethe same black height
     int leftBlackHeight = checkNodes(n->left);
     int rightBlackHeight = checkNodes(n->right);
 
-    // Se le altezze nere differiscono, l'albero è sbilanciato!
-    assert(leftBlackHeight == rightBlackHeight && "Violazione Altezza Nera!");
+    // If the black heights are different the tree is not balanced!
+    assert(leftBlackHeight == rightBlackHeight && "Violation of the black height!");
 
-    // Restituisco l'altezza nera corrente
+    // Return the current Black height
     return (n->color == BLACK) ? leftBlackHeight + 1 : leftBlackHeight;
 };
+
+void RedBlackTree::printTree(Node* root, int space) {
+    if (root == NULL) return;
+
+    // Aumenta la distanza tra i livelli
+    space += 10;
+
+    // Elabora prima il figlio destro (apparirà in alto)
+    printTree(root->right, space);
+
+    // Stampa il nodo corrente dopo lo spazio
+    printf("\n");
+    for (int i = 10; i < space; i++) printf(" ");
+    
+    // Mostra il colore (R per Red, B per Black)
+    char color = (root->color == RED) ? 'R' : 'B';
+    printf("[%d%c]\n", root->data, color);
+
+    // Elabora il figlio sinistro (apparirà in basso)
+    printTree(root->left, space);
+}
+
+void RedBlackTree::printHelper(Node* x, std::string indent, bool last) {
+    if (x != NIL) {
+        std::cout << indent;
+        if (last) {
+            std::cout << "└────";
+            indent += "     ";
+        } else {
+            std::cout << "├────";
+            indent += "|    ";
+        }
+
+        // Scegli il colore in base alla proprietà del nodo
+        std::string sColor = (x->color == RED) ? RED_TXT : BLK_TXT;
+        std::cout << sColor << x->data << " (" << (x->color == RED ? "R" : "B") << ")" << RESET << std::endl;
+
+        printHelper(x->left, indent, false);
+        printHelper(x->right, indent, true);
+    }
+}
+
+void RedBlackTree::prettyPrint() {
+    if (root) {
+        printHelper(this->root, "", true);
+    }
+}
