@@ -252,8 +252,6 @@ bool RedBlackTree::search(int key) {
 
     if (z == NIL) return 0;
     else return 1;
-
-    assert(z != NIL and "Errore: Tentativo di rimuovere una chiave inesistente!"); 
 };
 
 void RedBlackTree::verifyProperties() {
@@ -331,4 +329,18 @@ void RedBlackTree::prettyPrint() {
     if (root) {
         printHelper(this->root, "", true);
     }
+}
+
+void RedBlackTree::deleteTreeHelper(Node* node) {
+    // Ci fermiamo se il nodo è TNULL o nullo
+    if (node != NIL && node != nullptr) {
+        deleteTreeHelper(node->left);   // 1. Pulisci sinistra
+        deleteTreeHelper(node->right);  // 2. Pulisci destra
+        delete node;                    // 3. Cancella il nodo corrente
+    }
+}
+
+RedBlackTree::~RedBlackTree() {
+    deleteTreeHelper(this->root); 
+    delete NIL;                 
 }

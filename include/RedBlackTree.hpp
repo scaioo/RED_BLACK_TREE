@@ -36,6 +36,9 @@ class RedBlackTree {
         
         // Helper for printing
         void printHelper(Node* x, std::string indent, bool last);
+
+        // Helper for the destructor
+        void deleteTreeHelper(Node* node);
         
     public:
 
@@ -49,7 +52,7 @@ class RedBlackTree {
         };
 
         // Destructor
-
+        ~RedBlackTree();
 
         // Define primitive function: insert search delete
         void insert(int key);
