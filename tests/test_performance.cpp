@@ -12,59 +12,28 @@
 using namespace std;
 using namespace std::chrono;
 
-const int NUM_ITERATIONS = 100; 
-
-// struct for mean and sigma
-struct Stats {
-    double mean;
-    double sigma;
-};
-
-// Compute mean and standard deviation for a vector of doubles
-Stats computeStats(const vector<double>& data) {
-    if (data.empty()) return {0.0, 0.0};
-
-    // 1. mean
-    double sum = std::accumulate(data.begin(), data.end(), 0.0);
-    double mean = sum / data.size();
-
-    // 2. standard deviation
-    double sq_sum = 0.0;
-    for (double val : data) {
-        sq_sum += (val - mean) * (val - mean);
-    }
-    // Use sample standard deviation (divide by N-1) to get an unbiased estimate for benchmarking
-    double variance = (data.size() > 1) ? sq_sum / (data.size() - 1) : 0.0;
-    
-    return {mean, std::sqrt(variance)};
-}
+// --- BLOCKING CONFIGURATION ---
+// Total iterations = NUM_BLOCKS * BLOCK_SIZE
+// We will calculate statistics based on the averages of these blocks.
+const int NUM_BLOCKS = 1000; 
+const int BLOCK_SIZE = 5;  
 
 struct TestResult {
     double insertTimeMs;
     double deleteTimeMs;
 };
 
-// test insert and delete for a single N, returning the times in milliseconds
-TestResult runSingleTest(int n) {
-    RedBlackTree tree;
-    vector<int> data(n);
-    for(int i = 0; i < n; i++) data[i] = i;
-
-    // Random engine 
-    std::random_device rd;
-    std::mt19937 g(rd());
-
+// Test insert and delete for a single N
+TestResult runSingleTest(int dato,RedBlackTree& tree) {
     // --- INSERT ---
-    shuffle(data.begin(), data.end(), g);
     auto start = high_resolution_clock::now();
-    for(int val : data) tree.insert(val);
+    tree.insert(dato); // Insert the first element to ensure the tree is not empty
     auto stop = high_resolution_clock::now();
     double insertTime = duration<double, milli>(stop - start).count();
 
     // --- DELETE ---
-    shuffle(data.begin(), data.end(), g);
     start = high_resolution_clock::now();
-    for(int val : data) tree.remove(val); 
+    tree.remove(dato); // Remove the first element to ensure we are deleting from a non-empty tree
     stop = high_resolution_clock::now();
     double deleteTime = duration<double, milli>(stop - start).count();
 
@@ -73,59 +42,106 @@ TestResult runSingleTest(int n) {
 
 int main() {
     ofstream outFile("rbt_ratio_stats.csv");
-    // CSV Header
-    outFile << "N,RatioInsert_Mean,RatioInsert_Sigma,RatioDelete_Mean,RatioDelete_Sigma" << endl;
+    outFile << "N,RatioInsert_BlockMean,RatioInsert_BlockSigma,RatioDelete_BlockMean,RatioDelete_BlockSigma" << endl;
 
     vector<int> sizes = {100, 1000, 10000, 100000}; 
 
     cout << scientific << setprecision(3); 
     cout << "\n=================================================================================\n";
-    cout << " ANALISI STABILITA' DEL RAPPORTO (RATIO)\n";
-    cout << " Ratio = Time / (N * log2(N))\n";
-    cout << " Sigma basso indica alta aderenza alla complessita' teorica.\n";
+    cout << " STABILITY ANALISYS' (BLOCKING AVERAGE)\n";
+    cout << " Blocks: " << NUM_BLOCKS << " | Block Size: " << BLOCK_SIZE << " | Total Iter: " << NUM_BLOCKS * BLOCK_SIZE << endl;
+    cout << " Statistics are computed on the AVERAGES of each block.\n";
     cout << "=================================================================================\n";
     
     cout << left << setw(10) << "N" 
-         << setw(25) << "Ratio Ins (Mean +/- Sig)" 
-         << setw(25) << "Ratio Del (Mean +/- Sig)" << endl;
+         << setw(28) << "Ratio Ins (BlkMean +/- Sig)" 
+         << setw(28) << "Ratio Del (BlkMean +/- Sig)" << endl;
     cout << "---------------------------------------------------------------------------------\n";
-
+    
+    RedBlackTree tree;
+    int previous_size = 0;
     for(int n : sizes) {
-        vector<double> ratiosInsert;
-        vector<double> ratiosDelete;
-        ratiosInsert.reserve(NUM_ITERATIONS);
-        ratiosDelete.reserve(NUM_ITERATIONS);
+        // Grand accumulators (Sum of Block Means)
+        double grandSumIns = 0.0;
+        double grandSumSqIns = 0.0;
+        
+        double grandSumDel = 0.0;
+        double grandSumSqDel = 0.0;
 
-        // Compute the theoretical value once per N
-        double theoretical = n * log2(n);
-        if (theoretical == 0) theoretical = 1; // Protection for N=1
+        vector<int> data(n-previous_size);
+        previous_size = n;
+        std::iota(data.begin(), data.end(), 0);
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(data.begin(), data.end(), g);
+        // insert all the elements to have the right size of the tree for the insert/delete operations
+        for (int val : data) {tree.insert(val);}       
+        std::shuffle(data.begin(), data.end(), g);
+        // Theoretical complexity for normalization
+        double theoretical =  log2(n);
+        if (theoretical == 0) theoretical = 1; 
 
-        // --- BLOCK AVERAGE LOOP ---
-        for(int i = 0; i < NUM_ITERATIONS; ++i) {
-            TestResult res = runSingleTest(n);
+        // --- OUTER LOOP: Iterate over Blocks ---
+        for(int b = 0; b < NUM_BLOCKS; ++b) {
+            
+            // Local accumulators for the current block
+            double blockSumIns = 0.0;
+            double blockSumDel = 0.0;
 
-            // Calculate ratios and store them for THIS specific iteration
-            ratiosInsert.push_back(res.insertTimeMs / theoretical);
-            ratiosDelete.push_back(res.deleteTimeMs / theoretical);
+            // --- INNER LOOP: Fill the Block ---
+            for(int k = 0; k < BLOCK_SIZE; ++k) {
+                std::shuffle(data.begin(), data.end(), g);
+                TestResult res = runSingleTest(data[0],tree);
+                
+                // Accumulate normalized ratios
+                blockSumIns += (res.insertTimeMs / theoretical);
+                blockSumDel += (res.deleteTimeMs / theoretical);
+            }
+
+            // 1. Compute Average for this Block
+            double blockMeanIns = blockSumIns / BLOCK_SIZE;
+            double blockMeanDel = blockSumDel / BLOCK_SIZE;
+
+            // 2. Accumulate this Block Mean into Grand Stats
+            grandSumIns += blockMeanIns;
+            grandSumSqIns += (blockMeanIns * blockMeanIns);
+
+            grandSumDel += blockMeanDel;
+            grandSumSqDel += (blockMeanDel * blockMeanDel);
         }
 
-        // Compute stats for insert and delete ratios
-        Stats statsIns = computeStats(ratiosInsert);
-        Stats statsDel = computeStats(ratiosDelete);
+        // --- FINAL STATISTICS (Across Blocks) ---
+        
+        // Mean of Block Means
+        double finalMeanIns = grandSumIns / NUM_BLOCKS;
+        double finalMeanDel = grandSumDel / NUM_BLOCKS;
+
+        // Variance of Block Means
+        double varIns = 0.0;
+        double varDel = 0.0;
+
+        if (NUM_BLOCKS > 1) {
+            varIns = (grandSumSqIns - (grandSumIns * grandSumIns) / NUM_BLOCKS) / (NUM_BLOCKS - 1);
+            varDel = (grandSumSqDel - (grandSumDel * grandSumDel) / NUM_BLOCKS) / (NUM_BLOCKS - 1);
+        }
+
+        // Sigma (Standard Error of the blocks)
+        double sigmaIns = sqrt(max(0.0, varIns));
+        double sigmaDel = sqrt(max(0.0, varDel));
 
         // Output Console
         cout << left << setw(10) << n 
-             << statsIns.mean << " +/- " << statsIns.sigma << "   "
-             << statsDel.mean << " +/- " << statsDel.sigma << endl;
+             << finalMeanIns << " +/- " << sigmaIns << "      "
+             << finalMeanDel << " +/- " << sigmaDel << endl;
 
         // Output File
         outFile << n << "," 
-                << statsIns.mean << "," << statsIns.sigma << "," 
-                << statsDel.mean << "," << statsDel.sigma << endl;
+                << finalMeanIns << "," << sigmaIns << "," 
+                << finalMeanDel << "," << sigmaDel << endl;
     }
 
     cout << "=================================================================================\n";
-    cout << "Dati salvati in 'rbt_ratio_stats.csv'" << endl;
+    cout << "Data saved in 'rbt_ratio_stats.csv'" << endl;
     outFile.close();
 
     return 0;
