@@ -177,16 +177,6 @@ O(\log n)
 
 ---
 
-## 🚧 Possible Improvements
-
-* Add GoogleTest or Catch2 unit testing framework
-* Add GitHub Actions CI workflow
-* Convert the implementation into a templated generic container
-* Add Graphviz export for graphical visualization
-* Improve automatic performance aggregation and plot export
-
----
-
 ## 📜 License
 
 This project is open-source and available under the MIT License.
