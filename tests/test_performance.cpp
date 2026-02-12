@@ -4,36 +4,36 @@
 #include <chrono>
 #include <algorithm>
 #include <random>
-#include <cmath>    // Per log2, sqrt
-#include <numeric>  // Per accumulate
-#include <iomanip>  // Per formattazione
+#include <cmath>    
+#include <numeric>  
+#include <iomanip>  
 #include "RedBlackTree.hpp" 
 
 using namespace std;
 using namespace std::chrono;
 
-const int NUM_ITERATIONS = 100; // Quante volte ripetiamo il test per ogni N
+const int NUM_ITERATIONS = 100; 
 
-// Struttura per contenere Media e Deviazione Standard
+// struct for mean and sigma
 struct Stats {
     double mean;
     double sigma;
 };
 
-// Funzione generica per calcolare Media e Sigma di un vettore di double
+// Compute mean and standard deviation for a vector of doubles
 Stats computeStats(const vector<double>& data) {
     if (data.empty()) return {0.0, 0.0};
 
-    // 1. Media
+    // 1. mean
     double sum = std::accumulate(data.begin(), data.end(), 0.0);
     double mean = sum / data.size();
 
-    // 2. Deviazione Standard
+    // 2. standard deviation
     double sq_sum = 0.0;
     for (double val : data) {
         sq_sum += (val - mean) * (val - mean);
     }
-    // N-1 per la deviazione standard campionaria (più corretta per benchmark)
+    // Use sample standard deviation (divide by N-1) to get an unbiased estimate for benchmarking
     double variance = (data.size() > 1) ? sq_sum / (data.size() - 1) : 0.0;
     
     return {mean, std::sqrt(variance)};
@@ -44,13 +44,13 @@ struct TestResult {
     double deleteTimeMs;
 };
 
-// Esegue una singola prova (Insert + Delete)
+// test insert and delete for a single N, returning the times in milliseconds
 TestResult runSingleTest(int n) {
     RedBlackTree tree;
     vector<int> data(n);
     for(int i = 0; i < n; i++) data[i] = i;
 
-    // Random engine fresco per ogni iterazione
+    // Random engine 
     std::random_device rd;
     std::mt19937 g(rd());
 
@@ -64,7 +64,7 @@ TestResult runSingleTest(int n) {
     // --- DELETE ---
     shuffle(data.begin(), data.end(), g);
     start = high_resolution_clock::now();
-    for(int val : data) tree.remove(val); // Assumi remove() o deleteNode()
+    for(int val : data) tree.remove(val); 
     stop = high_resolution_clock::now();
     double deleteTime = duration<double, milli>(stop - start).count();
 
@@ -73,12 +73,12 @@ TestResult runSingleTest(int n) {
 
 int main() {
     ofstream outFile("rbt_ratio_stats.csv");
-    // CSV Header: Salviamo Media e Sigma dei RATIO
+    // CSV Header
     outFile << "N,RatioInsert_Mean,RatioInsert_Sigma,RatioDelete_Mean,RatioDelete_Sigma" << endl;
 
-    vector<int> sizes = {100, 1000, 10000, 100000, 1000000}; 
+    vector<int> sizes = {100, 1000, 10000, 100000}; 
 
-    cout << scientific << setprecision(3); // Notazione scientifica utile per ratio piccoli
+    cout << scientific << setprecision(3); 
     cout << "\n=================================================================================\n";
     cout << " ANALISI STABILITA' DEL RAPPORTO (RATIO)\n";
     cout << " Ratio = Time / (N * log2(N))\n";
@@ -96,20 +96,20 @@ int main() {
         ratiosInsert.reserve(NUM_ITERATIONS);
         ratiosDelete.reserve(NUM_ITERATIONS);
 
-        // Calcolo il valore teorico una volta sola per questo N
+        // Compute the theoretical value once per N
         double theoretical = n * log2(n);
-        if (theoretical == 0) theoretical = 1; // Protezione per N=1
+        if (theoretical == 0) theoretical = 1; // Protection for N=1
 
         // --- BLOCK AVERAGE LOOP ---
         for(int i = 0; i < NUM_ITERATIONS; ++i) {
             TestResult res = runSingleTest(n);
 
-            // Calcolo i ratio per QUESTA specifica iterazione e li salvo
+            // Calculate ratios and store them for THIS specific iteration
             ratiosInsert.push_back(res.insertTimeMs / theoretical);
             ratiosDelete.push_back(res.deleteTimeMs / theoretical);
         }
 
-        // Calcolo statistiche sui vettori dei RATIO
+        // Compute stats for insert and delete ratios
         Stats statsIns = computeStats(ratiosInsert);
         Stats statsDel = computeStats(ratiosDelete);
 
