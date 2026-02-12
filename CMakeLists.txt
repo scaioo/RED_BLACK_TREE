@@ -15,3 +15,12 @@ file(GLOB SOURCES "src/*.cpp")
 
 # Create final executable from source files
 add_executable(rbt_tree ${SOURCES})
+
+# Test Base: 
+add_executable(test_basic tests/test_basic.cpp src/RedBlackTree.cpp)
+
+# Test Stress: 
+add_executable(test_stress tests/test_stress.cpp src/RedBlackTree.cpp)
+
+# Test performance
+add_executable(test_performance tests/test_performance.cpp src/RedBlackTree.cpp)

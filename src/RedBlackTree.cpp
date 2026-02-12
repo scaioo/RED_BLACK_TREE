@@ -108,7 +108,7 @@ void RedBlackTree::insert_fixup(Node* &z) {
 
 void RedBlackTree::remove_fixup(Node* &x) {
     Node* w = NIL;
-    while( x != NIL and x->color == BLACK){
+    while( x != root and x->color == BLACK){
         if(x == x->parent->left){                                           // x is a left child?
             w = x->parent->right;                                           // w is x's sibling 
             if(w->color == RED){
@@ -138,7 +138,7 @@ void RedBlackTree::remove_fixup(Node* &x) {
             if(w->color == RED){
                 w->color = BLACK;                                           // |
                 x->parent->color = RED;                                     // | CASE 1
-                Left_Rotate(x->parent);                                     // | 
+                    Right_Rotate(x->parent);                                    // | 
                 w = x->parent->left;                                        // |
             }
             if(w->right->color == BLACK and w->left->color == BLACK){
@@ -154,12 +154,13 @@ void RedBlackTree::remove_fixup(Node* &x) {
                 w->color = x->parent->color;                                // |
                 x->parent->color = BLACK;                                   // | CASE 4
                 w->left->color = BLACK;                                     // |
-                Left_Rotate(x->parent);                                     // |
+                Right_Rotate(x->parent);                                    // |
                 x = root;                                                   // |
             }
 
         }
     }
+x->color = BLACK;
 };
 
 void RedBlackTree::insert(int key) {
@@ -273,7 +274,7 @@ int RedBlackTree::checkNodes(Node* n) {
         assert(n->right->color == BLACK);
     }
 
-    // Rule: Every path from root to leaf must hav ethe same black height
+    // Rule: Every path from root to leaf must have the same black height
     int leftBlackHeight = checkNodes(n->left);
     int rightBlackHeight = checkNodes(n->right);
 
@@ -316,7 +317,7 @@ void RedBlackTree::printHelper(Node* x, std::string indent, bool last) {
             indent += "|    ";
         }
 
-        // Scegli il colore in base alla proprietà del nodo
+        // chose the color from the node property
         std::string sColor = (x->color == RED) ? RED_TXT : BLK_TXT;
         std::cout << sColor << x->data << " (" << (x->color == RED ? "R" : "B") << ")" << RESET << std::endl;
 
@@ -332,11 +333,11 @@ void RedBlackTree::prettyPrint() {
 }
 
 void RedBlackTree::deleteTreeHelper(Node* node) {
-    // Ci fermiamo se il nodo è TNULL o nullo
+
     if (node != NIL && node != nullptr) {
-        deleteTreeHelper(node->left);   // 1. Pulisci sinistra
-        deleteTreeHelper(node->right);  // 2. Pulisci destra
-        delete node;                    // 3. Cancella il nodo corrente
+        deleteTreeHelper(node->left);   
+        deleteTreeHelper(node->right);  
+        delete node;                    
     }
 }
 

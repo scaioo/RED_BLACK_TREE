@@ -47,6 +47,11 @@ class RedBlackTree {
             // create a single sentinel node and mark it BLACK
             NIL = new Node(-1);
             NIL->color = BLACK;
+
+            NIL->left = NIL;
+            NIL->right = NIL;
+            NIL->parent = NIL;
+            
             root = NIL;
 
         };
